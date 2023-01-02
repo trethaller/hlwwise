@@ -5,37 +5,37 @@ private typedef Init = haxe.macro.MacroType < [wwise.Macros.buildTypes()] > ;
 #else
 
 abstract Event(String) from String to String {
-	inline public function new(s: String) { this = s; }
+	static inline public function make(s: String) : Event { return cast s; }
 	inline public function name() { return @:privateAccess this.bytes; };
 }
 
 abstract Trigger(String) from String to String {
-	inline public function new(s: String) { this = s; }
+	static inline public function make(s: String) : Trigger { return cast s; }
 	inline public function name() { return @:privateAccess this.bytes; };
 }
 
 abstract Switch(String) from String to String {
-	inline public function new(s: String) { this = s; }
+	static inline public function make(s: String) : Switch { return cast s; }
 	inline public function name() { return @:privateAccess this.bytes; };
 }
 
 abstract SwitchGroup(String) from String to String {
-	inline public function new(s: String) { this = s; }
+	static inline public function make(s: String) : SwitchGroup { return cast s; }
 	inline public function name() { return @:privateAccess this.bytes; };
 }
 
 abstract State(String) from String to String {
-	inline public function new(s: String) { this = s; }
+	static inline public function make(s: String) : State { return cast s; }
 	inline public function name() { return @:privateAccess this.bytes; };
 }
 
 abstract StateGroup(String) from String to String {
-	inline public function new(s: String) { this = s; }
+	static inline public function make(s: String) : StateGroup { return cast s; }
 	inline public function name() { return @:privateAccess this.bytes; };
 }
 
 abstract Param(String) from String to String {
-	inline public function new(s: String) { this = s; }
+	static inline public function make(s: String) : Param { return cast s; }
 	inline public function name() { return @:privateAccess this.bytes; };
 }
 #end
@@ -46,15 +46,15 @@ class GameObject {
 	var id : Int;
 	var name : String;
 	var switchCache : Map<SwitchGroup, Switch>;
-	var posX = Math.NaN;
-	var posY = Math.NaN;
-	var posZ = Math.NaN;
-	var frontX = Math.NaN;
-	var frontY = Math.NaN;
-	var frontZ = Math.NaN;
-	var upX = Math.NaN;
-	var upY = Math.NaN;
-	var upZ = Math.NaN;
+	var posX = 0.0;
+	var posY = 0.0;
+	var posZ = 0.0;
+	var frontX = 0.0;
+	var frontY = 0.0;
+	var frontZ = 0.0;
+	var upX = 0.0;
+	var upY = 0.0;
+	var upZ = 0.0;
 
 
 	public function new(?name: String) {
@@ -171,6 +171,7 @@ class Api {
 		return true;
 	}
 
+	/** Can be called when switching between scenes **/
 	public static function clearObjects() {
 		if(!initialized) return;
 		var keepList = [DEFAULT_OBJECT, DEFAULT_LISTENER];
@@ -190,9 +191,9 @@ class Api {
 
 	/** Loads asynchronously if a callback is passed **/
 	public static function loadBank(name: String, callback: Bool->Void=null) {
-		if(!initialized) return;
+		if(!initialized) return false;
 		if(callback == null)
-			Native.load_bank(@:privateAccess name.bytes);
+			return Native.load_bank(@:privateAccess name.bytes);
 		else {
 			sys.thread.Thread.create(function() {
 				var success = Native.load_bank(@:privateAccess name.bytes);
@@ -205,6 +206,7 @@ class Api {
 				}
 			});
 		}
+		return true;
 	}
 
 	static function dispatchCallbacks() {
@@ -241,11 +243,14 @@ class Api {
 	#if heaps
 	static var camera : h3d.Camera;
 	static var cameraDistance : Float = 0.;
+
+	/** Make default listener follow camera automatically **/
 	public static function setCamera(c: h3d.Camera, distance=0.) {
 		camera = c;
 		cameraDistance = distance;
 	}
 
+	/** Can be used to manually set additional listeners **/
 	static public function setCameraListenerPosition( id : Int, camera : h3d.Camera, camDistance : Float ) {
 		if(!initialized) return;
 		var front = camera.target.sub(camera.pos).normalized();
@@ -263,6 +268,7 @@ class Api {
 	}
 	#end
 
+	/** Needs to be called once per frame **/
 	public static function update() {
 		if(!initialized) return;
 
