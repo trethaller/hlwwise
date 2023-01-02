@@ -1,0 +1,9 @@
+{
+	"name": "hlwwise",
+	"url" : "https://github.com/trethaller/hlwwise.git",
+	"license": "BSD",
+	"description": "Wwise bindings for Hashlink",
+	"contributors": ["trethaller"],
+	"version": "0.1.0",
+	"releasenote": ""
+}
