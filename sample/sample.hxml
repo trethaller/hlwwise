@@ -1,0 +1,6 @@
+-lib hlwwise
+-lib heaps
+-lib hlsdl
+--main Sample
+-hl sample.hl
+-D wwiseIDs=data/Wwise_IDs.h
