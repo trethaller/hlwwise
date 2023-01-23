@@ -6,6 +6,7 @@
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SoundEngine/Common/IAkStreamMgr.h>                 // Streaming Manager
 #include <AK/SoundEngine/Common/AkStreamMgrModule.h>            // Streaming Manager
+#include <AK/SoundEngine/Common/AkCallback.h>
 #include <AK/MusicEngine/Common/AkMusicEngine.h>                // Music Engine
 #include <AK/SpatialAudio/Common/AkSpatialAudio.h>              // Spatial Audio
 #include <AK/Tools/Common/AkPlatformFuncs.h>                    // Thread defines
@@ -152,11 +153,24 @@ HL_PRIM bool HL_NAME(unload_bank)(vbyte* name) {
 }
 DEFINE_PRIM(_VOID, unload_bank, _BYTES);
 
+// Callback wrapper
+static void PostEventCallbackWrapper(AkCallbackType in_eType, AkCallbackInfo* data)
+{
+	vdynamic* ret;
+	vclosure* vcallback = (vclosure*)data->pCookie;
+	if (vcallback == nullptr) return;
 
-HL_PRIM int HL_NAME(post_event)(vbyte* name, int gameObject) {
-	return AK::SoundEngine::PostEvent(hlbytes_to_utf8(name), gameObject);
+	hl_register_thread(&ret);
+
+	((int(*)(AkCallbackType, AkCallbackInfo*))vcallback->fun)(in_eType, data);
+
+	hl_unregister_thread();
 }
-DEFINE_PRIM(_VOID, post_event, _BYTES _I32);
+
+HL_PRIM int HL_NAME(post_event)(vbyte* name, int gameObject, AkCallbackType cbType, vclosure* callback) {
+	return AK::SoundEngine::PostEvent(hlbytes_to_utf8(name), gameObject, cbType, PostEventCallbackWrapper, callback );
+}
+DEFINE_PRIM(_VOID, post_event, _BYTES _I32 _I32 _FUN(_VOID, _I32 _STRUCT));
 
 HL_PRIM int HL_NAME(post_trigger)(vbyte* name, int gameObject) {
 	return AK::SoundEngine::PostTrigger(hlbytes_to_utf8(name), gameObject);
