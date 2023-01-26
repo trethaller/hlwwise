@@ -170,7 +170,7 @@ static void PostEventCallbackWrapper(AkCallbackType in_eType, AkCallbackInfo* da
 HL_PRIM int HL_NAME(post_event)(vbyte* name, int gameObject, AkCallbackType cbType, vclosure* callback) {
 	return AK::SoundEngine::PostEvent(hlbytes_to_utf8(name), gameObject, cbType, PostEventCallbackWrapper, callback );
 }
-DEFINE_PRIM(_VOID, post_event, _BYTES _I32 _I32 _FUN(_VOID, _I32 _STRUCT));
+DEFINE_PRIM(_I32, post_event, _BYTES _I32 _I32 _FUN(_VOID, _I32 _STRUCT));
 
 HL_PRIM int HL_NAME(post_trigger)(vbyte* name, int gameObject) {
 	return AK::SoundEngine::PostTrigger(hlbytes_to_utf8(name), gameObject);

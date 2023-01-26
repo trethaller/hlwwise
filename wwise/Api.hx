@@ -40,6 +40,17 @@ abstract Param(String) from String to String {
 }
 #end
 
+abstract AkPlayingID(Int)
+{
+	inline public function new(i:Int)
+	{
+		this = i;
+	}
+
+	public static var InvalidID: AkPlayingID = cast 0;
+}
+
+
 @:enum abstract AkCallbackType(Int) from Int to Int {
 	var EndOfEvent					= 0x0001;	///< Callback triggered when reaching the end of an event. AkCallbackInfo can be cast to AkEventCallbackInfo.
 	var EndOfDynamicSequenceItem	= 0x0002;	///< Callback triggered when reaching the end of a dynamic sequence item. AkCallbackInfo can be cast to AkDynamicSequenceItemCallbackInfo.
@@ -72,8 +83,8 @@ abstract Param(String) from String to String {
 class AkEventCallbackInfo
 {
 	var ptr: hl.Bytes; // pCookie
-	public var gameObjId: Int;
-	public var playingId: Int; ///< Playing ID of Event, returned by PostEvent()
+	public var gameObjId: hl.I64;
+	public var playingId: AkPlayingID; ///< Playing ID of Event, returned by PostEvent()
 	public var eventId: Int; ///< Unique ID of Event, passed to PostEvent()
 }
 
@@ -108,9 +119,9 @@ class GameObject {
 		Api.unregister(this);
 	}
 
-	public function postEvent(evt: Event, callbackType: Int = 0, ?callback: AkEventCallbackFunc ) {
-		if(!Api.initialized) return;
-		Native.post_event(evt.name(), id, callbackType, callback);
+	public function postEvent(evt: Event, callbackType: Int = 0, ?callback: AkEventCallbackFunc ): AkPlayingID {
+		if(!Api.initialized) return AkPlayingID.InvalidID;
+		return cast Native.post_event(evt.name(), id, callbackType, callback);
 	}
 
 	public function postTrigger(evt: Trigger) {
@@ -255,9 +266,9 @@ class Api {
 			res.f();
 	}
 
-	public static function postEvent(evt: Event, callbackType = 0, callback: AkEventCallbackFunc = null) {
-		if(!initialized) return;
-		DEFAULT_OBJECT.postEvent(evt, callbackType, callback);
+	public static function postEvent(evt: Event, callbackType = 0, callback: AkEventCallbackFunc = null): AkPlayingID {
+		if(!initialized) return AkPlayingID.InvalidID;
+		return DEFAULT_OBJECT.postEvent(evt, callbackType, callback);
 	}
 
 	public static function postTrigger(evt: Trigger) {

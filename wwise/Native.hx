@@ -23,7 +23,7 @@ class Native {
 		return false;
 	}
 	static function unload_bank(name: hl.Bytes) {}
-	static function post_event(name: hl.Bytes, obj: Int, callbackType: Int, callback: AkEventCallbackFunc) {}
+	static function post_event(name: hl.Bytes, obj: Int, callbackType: Int, callback: AkEventCallbackFunc): Int { return 0; }
 	static function post_trigger(name: hl.Bytes, obj: Int) {}
 	static function set_position(id: Int, x: Float, y: Float, z: Float) {}
 	static function set_position_orientation(id: Int, x: Float, y: Float, z: Float, fx: Float, fy: Float, fz: Float, tx: Float, ty: Float, tz: Float) {}
