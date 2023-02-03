@@ -159,6 +159,7 @@ DEFINE_PRIM(_VOID, unload_bank, _BYTES);
 struct hl_root_container
 {
 	vclosure* ptr;
+	AkCallbackType requestedCallbacks;
 };
 
 /**
@@ -166,25 +167,29 @@ struct hl_root_container
 * register the thread with the GC, but also must immediately unregister it as haxe really 
 * doesn't play nice with wwise threads
 */
-static void post_event_callback_wrapper(AkCallbackType in_eType, AkCallbackInfo* data) {
+static void ak_callback_wrapper(AkCallbackType in_eType, AkCallbackInfo* data) {
 	vdynamic* ret;
 	hl_root_container*cb = (hl_root_container*)data->pCookie;
 	
 	if (cb == nullptr) 
 		return;
 
-	vclosure* vcallback = cb->ptr;
-	
 	hl_register_thread(&ret);
 
-	hl_call2(void, vcallback, AkCallbackType, in_eType, AkCallbackInfo *, data);
+	// Make sure we actually wanted to get this callback.
+	if ((in_eType & cb->requestedCallbacks) != 0 && cb->ptr)
+	{
+		vclosure* vcallback = cb->ptr;
+		hl_call2(void, vcallback, AkCallbackType, in_eType, AkCallbackInfo*, data);
+	}
 
-	hl_remove_root(&cb);
+	if (in_eType == AK_EndOfEvent )
+	{
+		hl_remove_root(&cb);
+		free(cb);
+	}
+
 	hl_unregister_thread();
-	
-	
-	free(cb);	
-	
 }
 
 
@@ -192,14 +197,18 @@ HL_PRIM int HL_NAME(post_event)(vbyte* name, int gameObject, AkCallbackType cbTy
 	
 	hl_root_container* cb = nullptr;
 
-	if (callback)
+	cbType = (AkCallbackType)(cbType | AK_EndOfEvent );
+
+	if (callback && cbType != 0)
 	{
 		cb = (hl_root_container *)malloc(sizeof(hl_root_container));
 		cb->ptr = callback;
+		cb->requestedCallbacks = cbType;
+		cbType = (AkCallbackType)( cbType | AK_EndOfEvent );
 		hl_add_root(&cb->ptr);
 	}
-		
-	return AK::SoundEngine::PostEvent(hlbytes_to_utf8(name), gameObject, cbType, post_event_callback_wrapper, cb);
+	
+	return AK::SoundEngine::PostEvent(hlbytes_to_utf8(name), gameObject, cbType, ak_callback_wrapper, cb);
 }
 DEFINE_PRIM(_I32, post_event, _BYTES _I32 _I32 _FUN(_VOID, _I32 _STRUCT ));
 
