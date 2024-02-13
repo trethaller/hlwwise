@@ -40,6 +40,57 @@ abstract Param(String) from String to String {
 }
 #end
 
+abstract AkPlayingID(Int)
+{
+	inline public function new(i:Int)
+	{
+		this = i;
+	}
+
+	public static var InvalidID: AkPlayingID = cast 0;
+}
+
+
+enum abstract AkCallbackType(Int) from Int to Int {
+	var EndOfEvent					= 0x0001;	///< Callback triggered when reaching the end of an event. AkCallbackInfo can be cast to AkEventCallbackInfo.
+	var EndOfDynamicSequenceItem	= 0x0002;	///< Callback triggered when reaching the end of a dynamic sequence item. AkCallbackInfo can be cast to AkDynamicSequenceItemCallbackInfo.
+	var Marker						= 0x0004;	///< Callback triggered when encountering a marker during playback. AkCallbackInfo can be cast to AkMarkerCallbackInfo.
+	var Duration					= 0x0008;	///< Callback triggered when the duration of the sound is known by the sound engine. AkCallbackInfo can be cast to AkDurationCallbackInfo.
+
+	var SpeakerVolumeMatrix			= 0x0010;   ///< Callback triggered at each frame, letting the client modify the speaker volume matrix. AkCallbackInfo can be cast to AkSpeakerVolumeMatrixCallbackInfo.
+
+	var Starvation					= 0x0020;	///< Callback triggered when playback skips a frame due to stream starvation. AkCallbackInfo can be cast to AkEventCallbackInfo.
+
+	var MusicPlaylistSelect			= 0x0040;	///< Callback triggered when music playlist container must select the next item to play. AkCallbackInfo can be cast to AkMusicPlaylistCallbackInfo.
+	var MusicPlayStarted			= 0x0080;	///< Callback triggered when a "Play" or "Seek" command has been executed ("Seek" commands are issued from AK::SoundEngine::SeekOnEvent()). Applies to objects of the Interactive-Music Hierarchy only. AkCallbackInfo can be cast to AkEventCallbackInfo.
+
+	var MusicSyncBeat				= 0x0100;	///< Enable notifications on Music Beat. AkCallbackInfo can be cast to AkMusicSyncCallbackInfo.
+	var MusicSyncBar				= 0x0200;	///< Enable notifications on Music Bar. AkCallbackInfo can be cast to AkMusicSyncCallbackInfo.
+	var MusicSyncEntry				= 0x0400;	///< Enable notifications on Music Entry Cue. AkCallbackInfo can be cast to AkMusicSyncCallbackInfo.
+	var MusicSyncExit				= 0x0800;	///< Enable notifications on Music Exit Cue. AkCallbackInfo can be cast to AkMusicSyncCallbackInfo.
+	var MusicSyncGrid				= 0x1000;	///< Enable notifications on Music Grid. AkCallbackInfo can be cast to AkMusicSyncCallbackInfo.
+	var MusicSyncUserCue			= 0x2000;	///< Enable notifications on Music Custom Cue. AkCallbackInfo can be cast to AkMusicSyncCallbackInfo.
+	var MusicSyncPoint				= 0x4000;	///< Enable notifications on Music switch transition synchronization point. AkCallbackInfo can be cast to AkMusicSyncCallbackInfo.
+	var MusicSyncAll				= 0x7f00;	///< Use this flag if you want to receive all notifications concerning AK_MusicSync registration.
+
+	var MIDIEvent					= 0x10000;	///< Enable notifications for MIDI events. AkCallbackInfo can be cast to AkMIDIEventCallbackInfo.
+
+	var CallbackBits				= 0xfffff;	///< Bitmask for all callback types.
+}
+
+@:keep
+@:struct
+class AkEventCallbackInfo
+{
+	var ptr: hl.Bytes; // pCookie
+	public var gameObjId: hl.I64;
+	public var playingId: AkPlayingID; ///< Playing ID of Event, returned by PostEvent()
+	public var eventId: Int; ///< Unique ID of Event, passed to PostEvent()
+}
+
+typedef AkEventCallbackFunc = ( Int, AkEventCallbackInfo ) -> Void;
+
+
 @:access(wwise.Api)
 @:allow(wwise.Api)
 class GameObject {
@@ -68,9 +119,9 @@ class GameObject {
 		Api.unregister(this);
 	}
 
-	public function postEvent(evt: Event) {
-		if(!Api.initialized) return;
-		Native.post_event(evt.name(), id);
+	public function postEvent(evt: Event, callbackType: Int = 0, ?callback: AkEventCallbackFunc ): AkPlayingID {
+		if(!Api.initialized) return AkPlayingID.InvalidID;
+		return cast Native.post_event(evt.name(), id, callbackType, callback);
 	}
 
 	public function postTrigger(evt: Trigger) {
@@ -215,9 +266,9 @@ class Api {
 			res.f();
 	}
 
-	public static function postEvent(evt: Event) {
-		if(!initialized) return;
-		DEFAULT_OBJECT.postEvent(evt);
+	public static function postEvent(evt: Event, callbackType = 0, callback: AkEventCallbackFunc = null): AkPlayingID {
+		if(!initialized) return AkPlayingID.InvalidID;
+		return DEFAULT_OBJECT.postEvent(evt, callbackType, callback);
 	}
 
 	public static function postTrigger(evt: Trigger) {
