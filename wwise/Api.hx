@@ -51,7 +51,7 @@ abstract AkPlayingID(Int)
 }
 
 
-@:enum abstract AkCallbackType(Int) from Int to Int {
+enum abstract AkCallbackType(Int) from Int to Int {
 	var EndOfEvent					= 0x0001;	///< Callback triggered when reaching the end of an event. AkCallbackInfo can be cast to AkEventCallbackInfo.
 	var EndOfDynamicSequenceItem	= 0x0002;	///< Callback triggered when reaching the end of a dynamic sequence item. AkCallbackInfo can be cast to AkDynamicSequenceItemCallbackInfo.
 	var Marker						= 0x0004;	///< Callback triggered when encountering a marker during playback. AkCallbackInfo can be cast to AkMarkerCallbackInfo.
