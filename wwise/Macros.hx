@@ -82,8 +82,8 @@ class Macros {
 				pos : pos,
 				name : ename,
 				pack : curMod,
-				kind : TDAbstract(tstring),
-				meta : [{ name : ":enum", pos : pos },{ name : ":fakeEnum", pos : pos }],
+				kind : TDAbstract(tstring, [AbEnum]),
+				meta : [{ name : ":fakeEnum", pos : pos }],
 				fields : fields,
 			});
 		}
